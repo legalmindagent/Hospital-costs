@@ -1,89 +1,7 @@
 import { useMemo, useState } from "react";
+import generatedData from "./data/generatedData.json";
 
-const DATA = [
-  {
-    h: "Erlanger",
-    d: "OXYGENATOR, QUADROX-ID BIOLINE HEPARIN COATED",
-    c: "53743",
-    g: 1760.0,
-    cash: 929.28,
-    pr: [
-      { n: "AETNA", p: "AETNA MEDICARE", $: 359.04 },
-      { n: "CARESOURCE", p: "CARESOURCE GA MEDICAID", $: 368.02 },
-      { n: "AMERIGROUP", p: "AMERIGROUP GA", $: 368.02 },
-    ],
-    cat: "Drugs & IV",
-    cost: 1.2,
-  },
-  {
-    h: "Parkridge",
-    d: "MRI BRAIN W&WO CONT",
-    c: "314968",
-    g: 13553.47,
-    cash: 0,
-    pr: [
-      { n: "Amerigroup", p: "MCD", $: 2060.13 },
-      { n: "Apex Health", p: "MCR", $: 2575.16 },
-      { n: "Humana", p: "TRICARE", $: 3388.37 },
-    ],
-    cat: "Imaging",
-    cost: 120,
-  },
-  {
-    h: "CHI Memorial",
-    d: "HC LAB TROPONIN",
-    c: "84484",
-    g: 537,
-    cash: 0,
-    pr: [
-      { n: "United", p: "Medicaid|TennCare", $: 8.74 },
-      { n: "Amerigroup", p: "Medicaid|All Plans", $: 12.38 },
-      { n: "Cigna", p: "Medicare|Healthspring", $: 13.09 },
-    ],
-    cat: "Lab Tests",
-    cost: 5.5,
-  },
-  {
-    h: "Parkridge",
-    d: "BEDSIDE PROCEDURE LVL 5",
-    c: "344755",
-    g: 21830,
-    cash: 0,
-    pr: [
-      { n: "Aetna", p: "MGMCRHMO", $: 3274.5 },
-      { n: "Amerigroup", p: "MCD", $: 3318.16 },
-      { n: "BCBS", p: "NetworkS", $: 3929.4 },
-    ],
-    cat: "Room & Board",
-    cost: 350,
-  },
-  {
-    h: "CHI Memorial",
-    d: "TENECTEPLASE (TNKASE) INJECTION-STROKE (MCT)",
-    c: "J3101",
-    g: 50436.37,
-    cash: 0,
-    pr: [
-      { n: "United", p: "Medicaid|TennCare", $: 60.36 },
-      { n: "Cigna", p: "Medicare|Healthspring", $: 152.8 },
-      { n: "BCBS - TN", p: "Commercial|Network S", $: 156.01 },
-    ],
-    cat: "Inpatient (DRG)",
-  },
-  {
-    h: "Erlanger",
-    d: "PR PHYSICAL THERAPY EVALUATION LOW COMPLEX 20 MINS",
-    c: "97161",
-    g: 173,
-    cash: 91.34,
-    pr: [
-      { n: "BLUECARE", p: "BlueCare", $: 68.09 },
-      { n: "HUMANA", p: "Medicare Advantage", $: 68.68 },
-      { n: "UHC", p: "UHC COMMUNITY", $: 68.75 },
-    ],
-    cat: "Therapy",
-  },
-];
+const DATA = generatedData;
 
 const fmt = (n) => {
   if (!n || n === 0) return "-";
@@ -92,8 +10,8 @@ const fmt = (n) => {
   return "$" + Number(n).toFixed(2);
 };
 
-const CATS = ["All", "Room & Board", "Drugs & IV", "Lab Tests", "Imaging", "Supplies", "Procedures", "Emergency", "Therapy", "Inpatient (DRG)"];
-const HOSPS = ["All", "Erlanger", "CHI Memorial", "Parkridge", "Parkridge East"];
+const CATS = ["All", ...Array.from(new Set(DATA.map((d) => d.cat))).sort()];
+const HOSPS = ["All", ...Array.from(new Set(DATA.map((d) => d.h))).sort()];
 const HC = { Erlanger: "#3b82f6", "CHI Memorial": "#14b8a6", Parkridge: "#ef4444", "Parkridge East": "#f97316" };
 const VIEWS = [
   { k: "sticker", label: "Sticker Price", sub: "What they bill", color: "#ef4444" },
@@ -230,7 +148,7 @@ export default function App() {
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 800, lineHeight: 1.2 }}>What Hospitals Actually Charge vs What It Costs Them</h1>
           <p style={{ fontSize: 13, color: "#94a3b8", marginTop: 6, lineHeight: 1.5 }}>
-            {DATA.length} sample items. Search and compare sticker prices, costs, cash prices, and insurer rates.
+            {DATA.length} items from public hospital cost and drug cost datasets. Search and compare sticker prices, costs, cash prices, and insurer rates.
           </p>
         </div>
       </div>
