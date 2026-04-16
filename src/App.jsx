@@ -26,11 +26,25 @@ const VIEWS = [
   { k: "insurance", label: "Insurance",  full: "Insurance Pays",   desc: "Lowest rate",           color: "#60a5fa" },
 ];
 
+// For hospital cost reports, pr[0].$ === cost (no real insurer rates in data).
+// For NADAC drugs, g === cost === cash === pr[0].$ (single acquisition cost).
+const hasRealInsurance = (item) => {
+  const ins = item.pr?.[0]?.$ || 0;
+  return ins > 0 && ins !== item.cost && ins !== item.g;
+};
+
 const getPrice = (item, view) => {
   if (view === "sticker")   return item.g    || 0;
   if (view === "cost")      return item.cost || 0;
-  if (view === "cash")      return item.cash || 0;
-  if (view === "insurance") return item.pr?.[0]?.$ || 0;
+  if (view === "cash") {
+    // Don't show cash if it's the same as sticker (NADAC sets all equal)
+    const c = item.cash || 0;
+    return c > 0 && c !== item.g ? c : 0;
+  }
+  if (view === "insurance") {
+    // Only show insurer rate if it's genuinely different from cost
+    return hasRealInsurance(item) ? item.pr[0].$ : 0;
+  }
   return 0;
 };
 
@@ -70,8 +84,10 @@ function Card({ item, view }) {
   const g = item.g || 0;
   const cost = item.cost || 0;
   const cash = item.cash || 0;
-  const lowestIns = item.pr?.[0]?.$ || 0;
-  const highlight = getPrice(item, view);
+  const lowestIns = hasRealInsurance(item) ? item.pr[0].$ : 0;
+  const rawHighlight = getPrice(item, view);
+  // Fall back to cost for Insurance/Cash views when no real data exists
+  const highlight = rawHighlight > 0 ? rawHighlight : (view === "insurance" || view === "cash") ? 0 : rawHighlight;
   const vcfg = VIEWS.find((v) => v.k === view);
   const markup = cost > 0 && g > 0 ? (g / cost).toFixed(1) : null;
   const catColor = item.cat === "Drugs & IV" ? "#f59e0b" : "#60a5fa";
@@ -117,13 +133,13 @@ function Card({ item, view }) {
         </div>
       </div>
 
-      {/* price bars */}
+      {/* price bars — only show bars where values genuinely differ */}
       {(g > 0 || cash > 0 || cost > 0) && (
         <div style={{ marginTop: 12 }}>
-          {g > 0 && <PriceBar label="Sticker" value={g} max={g} color="#f87171" />}
+          {g > 0 && <PriceBar label="Sticker / Billed" value={g} max={g} color="#f87171" />}
           {cost > 0 && cost !== g && <PriceBar label="Actual Cost" value={cost} max={g || cost} color="#c084fc" />}
-          {cash > 0 && cash !== g && <PriceBar label="Cash Price" value={cash} max={g || cash} color="#34d399" />}
-          {lowestIns > 0 && <PriceBar label="Insurance Pays" value={lowestIns} max={g || lowestIns} color="#60a5fa" />}
+          {cash > 0 && cash !== g && cash !== cost && <PriceBar label="Cash Price" value={cash} max={g || cash} color="#34d399" />}
+          {lowestIns > 0 && <PriceBar label="Insurance Rate" value={lowestIns} max={g || lowestIns} color="#60a5fa" />}
         </div>
       )}
 
